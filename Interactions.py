@@ -158,8 +158,8 @@ def findNeighbors_in_given_radius(location,radius):
         newneig.append(l)
         avg_neigh+=len(l)
 
-    print('average neighbors:',avg_neigh/n)
-    print('average distance:',mydist/mycount)
+    print(f'average neighbors: {avg_neigh/n}')
+    print(f'average distance: {mydist/mycount}')
 
     return newneig
 
@@ -256,8 +256,8 @@ def create_spatial_CT_feature_matrix(radius,PP,louvain,noct,fraction_CT,saveSpat
             newneig.append(l)
             avg_neigh+=len(l)
 
-        print('average neighbors:',avg_neigh/len(PP))
-        print('average distance:',mydist/mycount)
+        print(f'average neighbors: {avg_neigh/len(PP)}')
+        print(f'average distance: {mydist/mycount}')
         neighbors=newneig
 
     else:
@@ -294,7 +294,7 @@ def create_spatial_CT_feature_matrix(radius,PP,louvain,noct,fraction_CT,saveSpat
         input_mat_for_log_reg.append(temp)
 
     input_mat_for_log_reg=np.array(input_mat_for_log_reg)
-    np.savez(saveSpatial+'normalized_spatial_neighborhood_'+str(radius)+'.npz',input_mat_for_log_reg=input_mat_for_log_reg)
+    np.savez(f'{saveSpatial}normalized_spatial_neighborhood_{radius}.npz',input_mat_for_log_reg=input_mat_for_log_reg)
 
     M=0
 
@@ -471,12 +471,12 @@ def reading_data(coordinates,louvainFull,degbased_ctname,saveSpatial,removed_CTs
         louvain[i,1]=new_CT_id[value]
         #print(value,louvain[i])
 
-    fw=open(saveSpatial+'used_CT.txt','w')
+    fw=open(f'{saveSpatial}used_CT.txt','w')
     for i in range(len(new_CT_id)):
             value=fraction_CT[good_index_cell_counts[i]]
             name=CTname[good_index_cell_counts[i]]
             #print(CTname[key], key, total,len(cellsinCT[key]))
-            fw.write(str(i)+'\t'+name+'\t'+str('%0.4f'%value)+'\n')
+            fw.write(f'{i}\t{name}\t{value:.4f}\n')
     fw.close()
 
     louvainWithBarcodeId=louvain
@@ -579,7 +579,7 @@ def plot_confusion_matrix(input,saveas='pdf',showit=True,transparent_mode=False,
     coef_std=data['coef_std']
     CTFeatures=data['CTFeatures']
 
-    filename='R'+str(input.Radius)
+    filename=f'R{input.Radius}'
 
     plt.figure(figsize=figsize)
     classNames=[]
@@ -589,10 +589,10 @@ def plot_confusion_matrix(input,saveas='pdf',showit=True,transparent_mode=False,
     snn.heatmap(cmn,annot=True, fmt='.2f',xticklabels=classNames, annot_kws={"size": 3},yticklabels=classNames)
     plt.xlabel('Predicted classes')
     plt.ylabel('Truth classes')
-    plt.title('R = '+str(input.Radius)+', C='+str(input.lambda_c))
+    plt.title(f'R = {input.Radius}, C={input.lambda_c}')
     plt.tight_layout()
-    print("The figures are saved: ", input.niche_pred_outdir+'Confusing_matrix_'+filename+'.'+saveas)
-    plt.savefig(input.niche_pred_outdir+'Confusing_matrix_'+filename+'.'+saveas,bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
+    print(f"The figures are saved: {input.niche_pred_outdir}Confusing_matrix_{filename}.{saveas}")
+    plt.savefig(f'{input.niche_pred_outdir}Confusing_matrix_{filename}.{saveas}',bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
     if showit:
         pass
     else:
@@ -638,7 +638,7 @@ def plot_coefficient_matrix(input,saveas='pdf',showit=True,transparent_mode=Fals
     for i in range(len(input.classes)):
         classNames.append(input.nameOfCellType[input.classes[i]])
 
-    filename='R'+str(input.Radius)
+    filename=f'R{input.Radius}'
     plt.figure(figsize=figsize)
     #plt.figure()
     #snn.set(font_scale=0.4)
@@ -652,10 +652,10 @@ def plot_coefficient_matrix(input,saveas='pdf',showit=True,transparent_mode=Fals
     else:
         plt.ylabel('Features cross terms')
     #plt.xlabel('# of classes (no of cell types)')
-    plt.title('R = '+str(input.Radius)+', C='+str(input.lambda_c))
+    plt.title(f'R = {input.Radius}, C={input.lambda_c}')
     plt.tight_layout()
-    print("The figures are saved: ", input.niche_pred_outdir+'weight_matrix_'+filename+'.'+saveas)
-    plt.savefig(input.niche_pred_outdir+'weight_matrix_'+filename+'.'+saveas,bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
+    print(f"The figures are saved: {input.niche_pred_outdir}weight_matrix_{filename}.{saveas}")
+    plt.savefig(f'{input.niche_pred_outdir}weight_matrix_{filename}.{saveas}',bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
     if showit:
         pass
     else:
@@ -692,7 +692,7 @@ def plot_predicted_probabilities(input,saveas='pdf',showit=True,transparent_mode
     """
 
 
-    filename='R'+str(input.Radius)
+    filename=f'R{input.Radius}'
 
     plt.figure(figsize=figsize)
 
@@ -713,8 +713,8 @@ def plot_predicted_probabilities(input,saveas='pdf',showit=True,transparent_mode
     plt.title('Predicted probability')
     plt.xlabel('# of classes (no of cell types)')
     plt.tight_layout()
-    print("The figures are saved: ", input.niche_pred_outdir+'predicted_probability_'+filename+'.'+saveas)
-    plt.savefig(input.niche_pred_outdir+'predicted_probability_'+filename+'.'+saveas,bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
+    print(f"The figures are saved: {input.niche_pred_outdir}predicted_probability_{filename}.{saveas}")
+    plt.savefig(f'{input.niche_pred_outdir}predicted_probability_{filename}.{saveas}',bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
 
     if showit:
         pass
@@ -763,7 +763,7 @@ def plot_roc_results(input,nrows=4,ncols=4,saveas='pdf',showit=True,transparent_
     - The function creates a grid of ROC curves for the top 16 cell types with the highest ROC AUC values.
     """
 
-    filename='R'+str(input.Radius)
+    filename=f'R{input.Radius}'
     fig, ax = plt.subplots(nrows,ncols, figsize=figsize)
     plotaxis=[]
     for i in range(nrows):
@@ -791,7 +791,7 @@ def plot_roc_results(input,nrows=4,ncols=4,saveas='pdf',showit=True,transparent_
         else:
             ax[value[0],value[1]].set_yticks([])
 
-        ax[value[0],value[1]].set_title(str(highestROCofcelltype[i])+' : '+input.nameOfCellType[highestROCofcelltype[i]])
+        ax[value[0],value[1]].set_title(f'{highestROCofcelltype[i]} : {input.nameOfCellType[highestROCofcelltype[i]]}')
         ax[value[0],value[1]].plot(input.fpr[highestROCofcelltype[i]], input.tpr[highestROCofcelltype[i]], label='ROC(area = %0.2f)' % (input.roc_auc[highestROCofcelltype[i]]))
 
         ax[value[0],value[1]].legend(loc="best",fontsize=8)
@@ -799,8 +799,8 @@ def plot_roc_results(input,nrows=4,ncols=4,saveas='pdf',showit=True,transparent_
     snn.despine()
     #plt.suptitle('Receiver operating characteristic example')
     plt.tight_layout()
-    print("The figures are saved: ",input.niche_pred_outdir+'ROC_'+filename+'.'+saveas )
-    plt.savefig(input.niche_pred_outdir+'ROC_'+filename+'.'+saveas,bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
+    print(f"The figures are saved: {input.niche_pred_outdir}ROC_{filename}.{saveas}")
+    plt.savefig(f'{input.niche_pred_outdir}ROC_{filename}.{saveas}',bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
     if showit:
         pass
     else:
@@ -841,7 +841,7 @@ def read_processed_data(radius,inputdir):
     """
 
     #name=inputdir+'normalized_spatial_neighbors_'+str(radius)+'.dat'
-    name=inputdir+'normalized_spatial_neighborhood_'+str(radius)+'.npz'
+    name=f'{inputdir}normalized_spatial_neighborhood_{radius}.npz'
     data=np.load(name,allow_pickle=True)
     data1=data['input_mat_for_log_reg']
     #data1 = np.genfromtxt(open(name, "rb"), delimiter='\t', skip_header=0)
@@ -863,7 +863,7 @@ def read_processed_data(radius,inputdir):
     featureVector=range(2,2+nct) # #just neighborhood
     neighborhoodClass= data[:,featureVector]
     target= data[:,1]
-    print('data shape',data.shape, target.shape, "neighbor shape",neighborhoodClass.shape)
+    print(f'data shape: {data.shape}, {target.shape}, neighbor shape: {neighborhoodClass.shape}')
     inputFeatures=range(nct)
     return neighborhoodClass,target,inputFeatures
 
@@ -975,11 +975,11 @@ def model_log_regression(K_fold,n_repeats,neighborhoodClass,target,lambda_c,stra
         #LR_random= pipe_random.named_steps['logistic_regression_random']
         #if LR_grid.best_params_['C']==LR_random.best_params_['C']:
         #print('Searching hyperparameters ', 'Grid method:', LR_grid.best_params_['C'], ', Randomized method:', LR_random.best_params_['C'])
-        print('Searching hyperparameters ', 'Grid method:', LR_grid.best_params_['C'])
+        print(f'Searching hyperparameters, Grid method: {LR_grid.best_params_["C"]}')
         for key in how_many_times_repeat:
             if how_many_times_repeat[key]>1:
                 flag=0
-                print('Inverse of lambda regularization found', lambda_c)
+                print(f'Inverse of lambda regularization found: {lambda_c}')
     #'''
     #lambda_c=0.000244140625
     #lambda_c=0.0009765625
@@ -1057,7 +1057,7 @@ def model_log_regression(K_fold,n_repeats,neighborhoodClass,target,lambda_c,stra
     coef=np.mean(np.array(coef),axis=0)
     comp_score=np.mean(np.array(scorecalc),axis=1)
 
-    print('training',x_train.shape,'testing',x_test.shape,'coeff',coef.shape)
+    print(f'training: {x_train.shape}, testing: {x_test.shape}, coeff: {coef.shape}')
 
 
     #cmn=confusion_matrix(y_test,y_pred,normalize='true')
@@ -1126,7 +1126,7 @@ coeff_cutoff=20,saveas='pdf',transparent_mode=False,showit=True,figsize=(4.0,2.0
 
 
     confusion_cutoff=0 # no of cell types wants to print
-    filename=input.niche_pred_outdir+'TopCoeff_R'+str(input.Radius)
+    filename=f'{input.niche_pred_outdir}TopCoeff_R{input.Radius}'
 
     nameOfCellType=input.nameOfCellType
 
@@ -1191,7 +1191,7 @@ coeff_cutoff=20,saveas='pdf',transparent_mode=False,showit=True,figsize=(4.0,2.0
                 #ax.set_ylabel('value of coeff.')
                 #ax.set_xlabel('name of the coeff.')
                 #titlename=nameOfCellType[goodPredictedCellType[k]]+', conf score = {0:.3f}'.format(a[goodPredictedCellType[k]]) +'$\pm$'+str('%0.3f'%b[goodPredictedCellType[k]])
-                titlename=nameOfCellType[goodPredictedCellType[k]]+', conf. score = {0:.3f}'.format(a[goodPredictedCellType[k]]) +'$\pm$'+str('%0.3f'%b[goodPredictedCellType[k]])
+                titlename=f'{nameOfCellType[goodPredictedCellType[k]]}, conf. score = {a[goodPredictedCellType[k]]:.3f}$\pm${b[goodPredictedCellType[k]]:.3f}'
 
                 titlename=titlename.replace('_',' ')
                 ax.set_title(titlename,fontsize=7)
@@ -1208,8 +1208,8 @@ coeff_cutoff=20,saveas='pdf',transparent_mode=False,showit=True,figsize=(4.0,2.0
 
                 #fig.tight_layout()
                 savefname=remove_extra_character_from_name(nameOfCellType[goodPredictedCellType[k]])
-                print("The figures are saved: ", filename+'/Rank'+str(k+1)+'_'+savefname+'.'+saveas)
-                fig.savefig(filename+'/Rank'+str(k+1)+'_'+savefname+'.'+saveas,bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
+                print(f"The figures are saved: {filename}/Rank{k+1}_{savefname}.{saveas}")
+                fig.savefig(f'{filename}/Rank{k+1}_{savefname}.{saveas}',bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
                 if showit:
                     pass
                 else:
@@ -1394,20 +1394,20 @@ removed_CTs_before_finding_CT_CT_interactions=[]):
 
 
     if BothLinearAndCrossTerms==1:
-        niche_pred_outdir=output_nico_dir+'niche_prediction_linear/'
+        niche_pred_outdir=f'{output_nico_dir}niche_prediction_linear/'
     else:
-        niche_pred_outdir=output_nico_dir+'niche_prediction_cross/'
+        niche_pred_outdir=f'{output_nico_dir}niche_prediction_cross/'
     create_directory(niche_pred_outdir)
 
 
     PP,cluster,noct,fraction_CT,clusterWithBarcodeId= reading_data(posdata,degbased_cluster,degbased_ctname,output_nico_dir,removed_CTs_before_finding_CT_CT_interactions)
     M, neighbors,distance=create_spatial_CT_feature_matrix(Radius,PP,cluster,noct,fraction_CT,niche_pred_outdir,epsilonThreshold)
-    pickle.dump(neighbors,open(output_nico_dir+'neighbors_'+str(Radius)+'.p', 'wb'))
-    pickle.dump(distance,open(output_nico_dir+'distances_'+str(Radius)+'.p','wb'))
+    pickle.dump(neighbors,open(f'{output_nico_dir}neighbors_{Radius}.p', 'wb'))
+    pickle.dump(distance,open(f'{output_nico_dir}distances_{Radius}.p','wb'))
     df=pd.DataFrame(clusterWithBarcodeId)
-    df.to_csv(output_nico_dir+'used_Clusters'+str(Radius)+'.csv',index=False)
+    df.to_csv(f'{output_nico_dir}used_Clusters{Radius}.csv',index=False)
 
-    f=open(output_nico_dir+'used_CT.txt')
+    f=open(f'{output_nico_dir}used_CT.txt')
     nameOfCellType={}
     for line in f:
         l=line[0:-1].split('\t')
@@ -1418,7 +1418,7 @@ removed_CTs_before_finding_CT_CT_interactions=[]):
 
     #fw=open(mainoutputdir+'prediction_R'+str(Radius)+'.dat','w')
     #fw.write('\nRadius = '+ str(Radius)  + '\n')
-    fout=niche_pred_outdir+'classifier_matrices_'+str(Radius)+'.npz'
+    fout=f'{niche_pred_outdir}classifier_matrices_{Radius}.npz'
 
     inputdata={}
     inputdata['outputdir']=output_nico_dir
@@ -1533,8 +1533,8 @@ def plot_evaluation_scores(input,saveas='pdf',transparent_mode=False,showit=True
     axs.set_ylabel('score')
     fig.tight_layout()
 
-    print("The figures are saved: ", input.niche_pred_outdir+'scores_'+str(input.Radius)+'.'+saveas)
-    fig.savefig(input.niche_pred_outdir+'scores_'+str(input.Radius)+'.'+saveas,bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
+    print(f"The figures are saved: {input.niche_pred_outdir}scores_{input.Radius}.{saveas}")
+    fig.savefig(f'{input.niche_pred_outdir}scores_{input.Radius}.{saveas}',bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
     if showit:
         pass
     else:
@@ -1644,8 +1644,8 @@ with_labels=True,node_size=300,linewidths=0.5, node_font_size=8, alpha=0.5,font_
     #labels=nx.draw_networkx_labels(G,pos=pos,**options)
     #nx.draw(G,pos=pos,**options)
     #nx.draw_networkx_edge_labels(G, pos,edge_labels=edge_labels,label_pos=0.35, font_size=3  )
-    print("The figures are saved: ", input.niche_pred_outdir+'Niche_interactions_without_edge_weights_R'+str(input.Radius) +'.'+saveas)
-    fig.savefig(input.niche_pred_outdir+'Niche_interactions_without_edge_weights_R'+str(input.Radius) +'.'+saveas,bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
+    print(f"The figures are saved: {input.niche_pred_outdir}Niche_interactions_without_edge_weights_R{input.Radius}.{saveas}")
+    fig.savefig(f'{input.niche_pred_outdir}Niche_interactions_without_edge_weights_R{input.Radius}.{saveas}',bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
     if showit:
         pass
     else:
@@ -1768,8 +1768,8 @@ edge_label_pos=0.35,edge_font_size=3):
          linewidths=linewidths, font_size=node_font_size, font_weight=font_weight,width=weights, alpha=alpha,edge_color=colors,node_color=gradientColor)
 
         nx.draw_networkx_edge_labels(G, pos,edge_labels=edge_labels,label_pos=edge_label_pos, font_size=edge_font_size)
-        print("The figures are saved: ", input.niche_pred_outdir+'Niche_interactions_with_edge_weights_R'+str(input.Radius)+'.'+saveas)
-        fig.savefig(input.niche_pred_outdir+'Niche_interactions_with_edge_weights_R'+str(input.Radius)+'.'+saveas,bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
+        print(f"The figures are saved: {input.niche_pred_outdir}Niche_interactions_with_edge_weights_R{input.Radius}.{saveas}")
+        fig.savefig(f'{input.niche_pred_outdir}Niche_interactions_with_edge_weights_R{input.Radius}.{saveas}',bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
         if showit:
             pass
         else:

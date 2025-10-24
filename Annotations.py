@@ -12,6 +12,8 @@ import networkx as nx
 from types import SimpleNamespace
 from scipy.spatial import cKDTree
 import scipy.sparse as scipy_sparse
+from typing import Union, overload
+from pathlib import Path
 
 import warnings
 import time
@@ -439,8 +441,8 @@ def find_commnon_MNN(input):
             row=d_single_cluster[singlecell_cluid]
             mat21[row,col]+=1
             mat22[col,row]+=1
-            key=str(col)+'#'+str(row)
-            name=data[i,0]+'#'+data[i,1]
+            key=f'{col}#{row}'
+            name=f'{data[i,0]}#{data[i,1]}'
             if key not in save_anchors:
                 save_anchors[key]=[name]
             else:
@@ -474,7 +476,7 @@ def find_commnon_MNN(input):
             if value>input.across_spatial_clusters_dispersion_cutoff:
                 if j!=0:
                     found+=', '
-                found+=nct+':'+'%0.3f'%value
+                found+=f'{nct}:{value:.3f}'
                 if cname2[i] not in unique_rep_of_leiden_clusters_in_sp:
                     unique_rep_of_leiden_clusters_in_sp[cname2[i]]=[nct]
                 else:
@@ -519,9 +521,9 @@ def find_commnon_MNN(input):
             if flag==1:
                 if j!=0:
                     found+=', '
-                found+=input.lsp[0][index[j]]+':'+'%0.3f'%col[index[j]]
+                found+=f'{input.lsp[0][index[j]]}:{col[index[j]]:.3f}'
 
-                key=str(index[j])+'#'+str(i)
+                key=f'{index[j]}#{i}'
                 tt.append(key)
                 if key in save_anchors:
                     list_of_anchors=save_anchors[key]
@@ -590,45 +592,93 @@ def visualize_spatial_anchored_cell_mapped_to_scRNAseq(input,saveas='pdf',transp
     snn.heatmap(data=mat2,annot=True, fmt='0.2f',xticklabels=cname2, annot_kws={"size": 5},yticklabels=cname1)
     plt.xlabel('Spatial Leiden Clusters')
     plt.ylabel('scRNAseq Clusters')
-    plt.title('MNN K = ' + str(input.KNN),fontsize=12)
+    plt.title(f'MNN K = {input.KNN}',fontsize=12)
     plt.tight_layout()
-    print("The figures are saved: ", input.output_annot+'visualize_anchors.'+saveas)
-    plt.savefig(input.output_annot+'visualize_anchors.'+saveas,bbox_inches='tight',transparent=transparent_mode,dpi=300)
+    print(f"The figures are saved: {input.output_annot}visualize_anchors.{saveas}")
+    plt.savefig(f'{input.output_annot}visualize_anchors.{saveas}',bbox_inches='tight',transparent=transparent_mode,dpi=300)
     if showit:
         pass
     else:
         plt.close('all')
 
 
+def _load_if_path(data: Union[sc.AnnData, str, Path]) -> sc.AnnData:
+    """Helper to load AnnData from path or return as-is."""
+    if isinstance(data, (str, Path)):
+        return sc.read_h5ad(data)
+    return data
 
+# 2-parameter (auto-extract raw from ref_adata.raw)
+@overload
+def find_anchor_cells_between_ref_and_query(
+    ref_adata: sc.AnnData,
+    query_adata: sc.AnnData,
+    ref_adata_count: None = None,
+    output_annotation_dir=None,
+    output_nico_dir=None,
+    neigh=50,
+    no_of_pc=50,
+    minkowski_order=2
+) -> SimpleNamespace: ...
 
+#  3-parameter (explicit count data)
+@overload
+def find_anchor_cells_between_ref_and_query(
+    ref_adata: Union[sc.AnnData, str, Path],
+    query_adata: Union[sc.AnnData, str, Path],
+    ref_adata_count: Union[sc.AnnData, str, Path],
+    output_annotation_dir=None,
+    output_nico_dir=None,
+    neigh=50,
+    no_of_pc=50,
+    minkowski_order=2
+) -> SimpleNamespace: ...
 
-def find_anchor_cells_between_ref_and_query(ref_adata:sc.AnnData,query_adata:sc.AnnData,
-output_annotation_dir=None,
-output_nico_dir=None,
-neigh=50,no_of_pc=50,minkowski_order=2):
-
+def find_anchor_cells_between_ref_and_query(
+    ref_adata,
+    query_adata,
+    ref_adata_count=None,
+    output_annotation_dir=None,
+    output_nico_dir=None,
+    neigh=50,
+    no_of_pc=50,
+    minkowski_order=2
+):
     """
     Finds all anchor cells between query and reference data.
 
-    This function reads the reference and query data from the specified directories, performs necessary preprocessing, and finds mutual nearest neighbors in the PCA space to map cell types between the two datasets.
-
+    This function reads the reference and query data from the specified directories, 
+    performs necessary preprocessing, and finds mutual nearest neighbors in the PCA 
+    space to map cell types between the two datasets.
 
     Parameters
     ----------
-    ref_adata : ref sc adata
-    query_adata : query sp adata
+    ref_adata : AnnData or str or Path
+        Reference single-cell data (SCTransformed). Can be:
+        - AnnData object directly
+        - Path to .h5ad file (will be loaded automatically)
+    query_adata : AnnData or str or Path
+        Query spatial data. Can be:
+        - AnnData object directly
+        - Path to .h5ad file (will be loaded automatically)
+    ref_adata_count : AnnData or str or Path, optional
+        Raw count reference data. If None, will attempt to extract from 
+        ref_adata.raw.to_adata(). If provided, uses this directly.
+        - AnnData object directly
+        - Path to .h5ad file (will be loaded automatically)
+        (default is None - auto-extract from ref_adata.raw)
     output_annotation_dir : str, optional
         Directory to save output annotations. If None, a default directory is used.
         (default is None)
     output_nico_dir : str, optional
-        Directory to save output NICOLAE results. If None, './nico_out/' is used.
-        (default is './nico_out/annotations')
+        Directory to save output NICO results. If None, './nico_out/' is used.
+        (default is './nico_out/')
     neigh : int, optional
         The number of K-nearest neighbors to find the anchor cells.
         (default is 50)
     no_of_pc : int, optional
-        The number of principal components used to transform the normalized expression matrix into PCA space.
+        The number of principal components used to transform the normalized 
+        expression matrix into PCA space.
         (default is 50)
     minkowski_order : int, optional
         The type of distance metric used:
@@ -636,12 +686,59 @@ neigh=50,no_of_pc=50,minkowski_order=2):
         - 1 for Manhattan distance
         (default is 2)
 
-    Outputs
+    Returns
     -------
-    The function produces the mapping of cell type information between two modalities and saves the results in the specified output directory.
+    SimpleNamespace
+        Object containing results and intermediate data including:
+        - output_annot: annotation output directory
+        - KNN: number of neighbors used
+        - ad_sp: processed spatial data
+        - original_h5ad: original reference data with raw counts
+        - adata_query: original query data
+        - fmnn: path to anchors file
+        - output_nico_dir: NICO output directory
+
+    Raises
+    ------
+    ValueError
+        If ref_adata_count is None and ref_adata.raw is also None/empty.
+
+    Examples
+    --------
+    Auto-extract raw counts from ref_adata.raw:
+    
+    >>> result = find_anchor_cells_between_ref_and_query(ref_adata, query_adata)
+    
+    Explicitly provide count data:
+    
+    >>> result = find_anchor_cells_between_ref_and_query(
+    ...     ref_adata_sct, query_adata, ref_adata_count
+    ... )
+    
+    Mix paths and objects:
+    
+    >>> result = find_anchor_cells_between_ref_and_query(
+    ...     'ref.h5ad', query_adata, 'ref_counts.h5ad'
+    ... )
 
     """
-
+    # Runtime dispatch - handle both AnnData and path inputs
+    ref_adata = _load_if_path(ref_adata)
+    query_adata = _load_if_path(query_adata)
+    
+    # Smart handling of count data
+    if ref_adata_count is None:
+        # Try to extract from .raw
+        if ref_adata.raw is None:
+            raise ValueError(
+                "ref_adata.raw is None. Please provide ref_adata_count explicitly "
+                "as the third parameter:\n"
+                "  find_anchor_cells_between_ref_and_query(ref_adata, query_adata, ref_adata_count)"
+            )
+        original_h5ad = ref_adata.raw.to_adata()
+    else:
+        # Use explicitly provided count data
+        original_h5ad = _load_if_path(ref_adata_count)
 
     if output_nico_dir==None:
         outputdir='./nico_out/'
@@ -652,17 +749,12 @@ neigh=50,no_of_pc=50,minkowski_order=2):
     sct_ad_sp=query_adata
     sct_ad_sc=ref_adata
 
-    original_h5ad=sct_ad_sc.raw.to_adata()
-
-    #cellname=np.reshape(cellname,(len(cellname),1))
-    #annotation_singlecell_celltypename=np.reshape(annotation_singlecell_celltypename,(len(annotation_singlecell_celltypename),1))
-
     if output_annotation_dir==None:
-        output_annot=outputdir+'annotations/'
+        output_annot=f'{outputdir}annotations/'
     else:
         output_annot=output_annotation_dir
     create_directory(output_annot)
-    #method='gauss'
+    
     method='umap'
 
     sp_genename=sct_ad_sp.var_names.to_numpy()
@@ -672,10 +764,10 @@ neigh=50,no_of_pc=50,minkowski_order=2):
     ad_sp_ori=sct_ad_sp[:,index_sp].copy()
     ad_sc_ori=sct_ad_sc[:,index_sc].copy()
 
-    ad_sc_ori.write_h5ad(output_annot+'final_sct_sc.h5ad')
-    ad_sp_ori.write_h5ad(output_annot+'final_sct_sp.h5ad')
+    ad_sc_ori.write_h5ad(f'{output_annot}final_sct_sc.h5ad')
+    ad_sp_ori.write_h5ad(f'{output_annot}final_sct_sp.h5ad')
 
-    fmnn=output_annot+"anchors_data_"+str(neigh)+'.npz'
+    fmnn=f'{output_annot}anchors_data_{neigh}.npz'
 
     flag=1
     if os.path.isfile(fmnn):
@@ -685,7 +777,6 @@ neigh=50,no_of_pc=50,minkowski_order=2):
         #    flag=0
     if flag==1:
         input_sp,input_sc,sp_barcode,sc_barcode=sct_return_sc_sp_in_shared_common_PC_space(ad_sp_ori,ad_sc_ori,no_of_pc,method)
-        #print('sp',input_sp.shape,'\nsc',input_sc.shape)
         corrected = find_mutual_nn(minkowski_order,input_sp,input_sc,sp_barcode,sc_barcode, k1= neigh,k2= neigh)
         #pd.DataFrame(corrected).to_csv(fmnn,index=False,header=None)
         n_jobs=-1
@@ -714,8 +805,8 @@ neigh=50,no_of_pc=50,minkowski_order=2):
 
 def delete_files(input):
     "This function will delete the anchors file and temporary file generated during the annotations."
-    os.remove(input.output_annot+'final_sct_sc.h5ad')
-    os.remove(input.output_annot+'final_sct_sp.h5ad')
+    os.remove(f'{input.output_annot}final_sct_sc.h5ad')
+    os.remove(f'{input.output_annot}final_sct_sp.h5ad')
     os.remove(input.fmnn)
 
 
@@ -773,8 +864,8 @@ number_of_iteration_to_perform_celltype_annotations=3,resolved_tie_issue_with_we
     annotation_singlecell_celltypename=df.to_numpy()
     cellname=df.index.to_numpy()
 
-    ad_sc_ori=sc.read_h5ad(previous.output_annot+'final_sct_sc.h5ad')
-    ad_sp_ori=sc.read_h5ad(previous.output_annot+'final_sct_sp.h5ad')
+    ad_sc_ori=sc.read_h5ad(f'{previous.output_annot}final_sct_sc.h5ad')
+    ad_sp_ori=sc.read_h5ad(f'{previous.output_annot}final_sct_sp.h5ad')
     singlecell_sct_barcode_id=ad_sc_ori.obs_names.to_numpy()
     spatialcell_sct_barcode_id=ad_sp_ori.obs_names.to_numpy()
 
@@ -803,7 +894,7 @@ number_of_iteration_to_perform_celltype_annotations=3,resolved_tie_issue_with_we
     spatialcell_unique_clusterid=sorted(list(np.unique(annotation_spatial_cluster_id)))
     d={}
     for i in range(len(spatialcell_unique_clusterid)):
-        name='c'+str(spatialcell_unique_clusterid[i])
+        name=f'c{spatialcell_unique_clusterid[i]}'
         d[spatialcell_unique_clusterid[i]]=name
         spatialcell_unique_clustername.append(name)
     annotation_spatial_celltypename=[]
@@ -817,8 +908,8 @@ number_of_iteration_to_perform_celltype_annotations=3,resolved_tie_issue_with_we
     data=np.load(previous.fmnn,allow_pickle=True)
 
     spatial_annotation_output_fname='nico_annotation'
-    spatial_deg_annotation_output_clustername=spatial_annotation_output_fname+'_cluster.csv'
-    spatial_deg_annotation_output_celltypename=spatial_annotation_output_fname+'_ct_name.csv'
+    spatial_deg_annotation_output_clustername=f'{spatial_annotation_output_fname}_cluster.csv'
+    spatial_deg_annotation_output_celltypename=f'{spatial_annotation_output_fname}_ct_name.csv'
 
     inputvar={}
     inputvar['fname_mnn_anchors']=data['anchors']
@@ -866,7 +957,7 @@ number_of_iteration_to_perform_celltype_annotations=3,resolved_tie_issue_with_we
 
     index=[]
     for i in range(len(mnn)):
-        name=mnn[i,0]+'#'+mnn[i,1]
+        name=f'{mnn[i,0]}#{mnn[i,1]}'
         if name in good_anchors:
             index.append(i)
     mnn=mnn[index,:]
@@ -887,9 +978,8 @@ number_of_iteration_to_perform_celltype_annotations=3,resolved_tie_issue_with_we
     for key in sp_cell_identity:
         name=''
         a=sp_cell_identity[key]
-        #print('1' , a)
         for j in range(len(a)):
-            name+='_a#d_'+a[j][0]
+            name+=f'_a#d_{a[j][0]}'
         if len(a)==1:
             unique_mapped[key]=a[0][0]
         else:
@@ -899,11 +989,9 @@ number_of_iteration_to_perform_celltype_annotations=3,resolved_tie_issue_with_we
                 t1.append(a[j][1])
                 t2.append(a[j][0])
             confused[key]=t2
-            #print(key,t1,t2)
         all_mapped[key]=name[5:]
         #fw.write(key+'\t'+str(name)+'\n')
 
-    #print('unique mapped 1',len(unique_mapped))
     #fw=open(input.savepath+'unique_mapped.dat','w')
     #for key in unique_mapped:
     #    fw.write(key+'\t'+'0\n')
@@ -920,7 +1008,6 @@ number_of_iteration_to_perform_celltype_annotations=3,resolved_tie_issue_with_we
         all_anchored_mapped=resolved_confused_and_unmapped_mapping_of_cells_with_majority_vote(confused,G,all_mapped,unique_mapped,resolutionClusterWise)
     else:
         all_anchored_mapped=resolved_confused_and_unmapped_mapping_of_cells_with_weighted_average_of_inverse_distance_in_neighbors(confused,G,weights,all_mapped,unique_mapped,resolutionClusterWise)
-    #print('unique mapped 2',len(all_anchored_mapped))
     availabled_anchors_mapped=all_anchored_mapped
 
     for iter in range(input.number_of_iteration_to_perform_celltype_annotations):
@@ -930,8 +1017,6 @@ number_of_iteration_to_perform_celltype_annotations=3,resolved_tie_issue_with_we
                 unique_mapped=resolved_confused_and_unmapped_mapping_of_cells_with_majority_vote(unmapped_cellname,G,availabled_anchors_mapped,availabled_anchors_mapped,resolutionClusterWise)
             else:
                 unique_mapped=resolved_confused_and_unmapped_mapping_of_cells_with_weighted_average_of_inverse_distance_in_neighbors(unmapped_cellname,G,weights,availabled_anchors_mapped,availabled_anchors_mapped,resolutionClusterWise)
-
-            #print('iter',iter,len(unique_mapped),len(unmapped_cellname),len(unmapped_deg))
 
             for i in range(len(cellname)):
                 key=cellname[i]
@@ -945,10 +1030,9 @@ number_of_iteration_to_perform_celltype_annotations=3,resolved_tie_issue_with_we
                     count+=1
                 else:
                     availabled_anchors_mapped[key]=unique_mapped[key]
-            #print('Iter',iter,count)
 
-            deg_annot_cluster_fname=input.output_annot+str(iter+1)+'_'+input.spatial_deg_annotation_output_clustername
-            deg_annot_ct_fname=input.output_annot+str(iter+1)+'_'+input.spatial_deg_annotation_output_celltypename
+            deg_annot_cluster_fname=f'{input.output_annot}{iter+1}_{input.spatial_deg_annotation_output_clustername}'
+            deg_annot_ct_fname=f'{input.output_annot}{iter+1}_{input.spatial_deg_annotation_output_celltypename}'
 
             nico_cluster=write_annotation(deg_annot_cluster_fname,deg_annot_ct_fname,unique_mapped,cellname)
 
@@ -995,10 +1079,9 @@ def read_dist_and_nodes_as_graph(knn_dist,knn_nodes):
     for i in range(len(knn_nodes)):
         l=knn_nodes[i]
         dist=knn_dist[i]
-        #print(l,dist)
         for n in range(1,len(l)):
             temp=sorted([l[0],l[n]])
-            name=str(temp[0])+'#'+str(temp[1])
+            name=f'{temp[0]}#{temp[1]}'
             weights[name]=dist[n]
 
 
@@ -1036,7 +1119,7 @@ def read_KNN_file(KNNfilename):
         #for m in range(len(l)):
         for n in range(1,len(l)):
             temp=sorted([l[0],l[n]])
-            name=temp[0]+'#'+temp[1]
+            name=f'{temp[0]}#{temp[1]}'
             d[name]=1
 
             #all_edges.append([l[0].replace('cell',''),l[n].replace('cell','')])
@@ -1110,7 +1193,6 @@ def findSpatialCells(midzoneCells,mnn):
         first=midzoneCells[i]
         index=np.where(mnn[:,1]==first)
         spcells=mnn[index[0],0]
-        #print(spcells)
         for k in range(len(spcells)):
             if spcells[k] not in d:
                 d[spcells[k]]=1
@@ -1153,9 +1235,7 @@ def find_all_the_spatial_cells_mapped_to_single_cells(sc_ctype_id,sc_clusters,mn
         sc_ct_specific_cells=return_singlecells(sc_clusters,sc_ctype_id[i])
         # all the single cell barcode id of sc_ctype_name[i]
         sp_ct_specific_cells=findSpatialCells(sc_ct_specific_cells,mnn)
-        #print('1',i,sc_ctype_id[i],len(sp_ct_specific_cells))
         spdata.append(sp_ct_specific_cells)
-        #print(sc_ctype_name[i], '\tSC',len(sc_ct_specific_cells),'\tSP',len(sp_ct_specific_cells))
 
     sp_cell_identity={}
     for i in range(len(sc_ctype_id)):
@@ -1168,9 +1248,7 @@ def find_all_the_spatial_cells_mapped_to_single_cells(sc_ctype_id,sc_clusters,mn
 
     for key in sp_cell_identity:
         a=sp_cell_identity[key]
-        #print(a)
         if len(a)>1:
-            #print(key, a)
             t1=[]
             t2=[]
             for j in range(len(a)):
@@ -1232,14 +1310,12 @@ def write_annotation(deg_annot_cluster_fname,deg_annot_ct_fname,unique_mapped,ce
         if a not in sc_ctype_name:
             sc_ctype_name.append(a)
 
-    #print(sc_ctype_name)
-    #print(d.keys())
     sc_ctype_name=sorted(sc_ctype_name)
     fw=open(deg_annot_ct_fname,'w')
     fw.write('clusterID,clusterName,Frequency\n')
     d={}
     for i in range(len(sc_ctype_name)):
-        fw.write(str(i)+','+sc_ctype_name[i]+','+str(d2[sc_ctype_name[i]])+'\n')
+        fw.write(f'{i},{sc_ctype_name[i]},{d2[sc_ctype_name[i]]}\n')
         d[sc_ctype_name[i]]=i
     fw.close()
 
@@ -1250,7 +1326,7 @@ def write_annotation(deg_annot_cluster_fname,deg_annot_ct_fname,unique_mapped,ce
     for i in range(len(cellname)):
         barcodeid=cellname[i]
         ctname=unique_mapped[barcodeid]
-        fw.write(barcodeid+','+str(d[ctname])+'\n')
+        fw.write(f'{barcodeid},{d[ctname]}\n')
         nico_cluster.append(ctname)
     fw.close()
 
@@ -1371,7 +1447,6 @@ def resolved_confused_and_unmapped_mapping_of_cells_with_weighted_average_of_inv
     """
     for mainkey in confused:
             a=G[mainkey]
-            #print('\n\n\n\n',mainkey,len(a))
             current_clu_id=sp_leiden_barcode2cluid_resolution_wise[mainkey]
             x=[]
             t=[]
@@ -1379,7 +1454,7 @@ def resolved_confused_and_unmapped_mapping_of_cells_with_weighted_average_of_inv
             for key in a:
                 if key in all_mapped:
                     A=sorted([mainkey,key])
-                    weight_score.append(1/weights[A[0]+'#'+A[1]]) #inverse of distance
+                    weight_score.append(1/weights[f'{A[0]}#{A[1]}']) #inverse of distance
                     t.append(all_mapped[key])
                     if current_clu_id==sp_leiden_barcode2cluid_resolution_wise[key]:
                         #x.append(sp_leiden_barcode2cluid_resolution_wise[key])
@@ -1397,8 +1472,6 @@ def resolved_confused_and_unmapped_mapping_of_cells_with_weighted_average_of_inv
                 neigh_clu_id=list(np.unique(x)) #     Counter(x)
                 c=Counter(t)
                 totalsum=sum(c.values())
-                #print('a',mainkey,len(t),c,totalsum)#confused[mainkey])
-                #print('b',current_clu_id,neigh_clu_id)
                 low2high=sorted(c, key=c.get)
                 high2low=low2high[::-1]
                 ws=[]
@@ -1445,13 +1518,6 @@ def resolved_confused_and_unmapped_mapping_of_cells_with_weighted_average_of_inv
                         else:
                             finalone=t2[index[0]] #if the second cell type has lower degree than first but it has lower weight score then it choses the first cell type
 
-
-                    #print('b',current_clu_id,neigh_clu_id)
-                    #print('index',index,t1[index])
-                    #print('ok',high2low,c,ws)
-                    #print('xx',neigh_clu_id,temp,finalone1)
-
-                #print('final',finalone)
                 unique_mapped[mainkey]=finalone
     return unique_mapped
 
@@ -1601,7 +1667,7 @@ number_of_iteration_to_perform_celltype_annotations=3,cmap=plt.cm.get_cmap('jet'
         outputdir=output_nico_dir
 
     if output_annotation_dir==None:
-        fig_save_path=outputdir+'annotations/'
+        fig_save_path=f'{outputdir}annotations/'
     else:
         fig_save_path=output_annotation_dir
 
@@ -1612,7 +1678,7 @@ number_of_iteration_to_perform_celltype_annotations=3,cmap=plt.cm.get_cmap('jet'
     #degbased_ctname=df.to_numpy()
 
 
-    adata=sc.read_h5ad(outputdir+anndata_object_name)
+    adata=sc.read_h5ad(f'{outputdir}{anndata_object_name}')
     temp=adata.obsm[umap_tag]
     cellname=adata.obs_names.to_numpy()#df.index.to_numpy()
     cellname=np.reshape(cellname,(len(cellname),1))
@@ -1702,10 +1768,10 @@ def save_annotations_in_spatial_object(inputdict,anndata_object_name='nico_cellt
     The function saves the annotated AnnData object in the specified directory ('./nico_out/') with the given file name.
 
     """
-    print("Nico cell type cluster are saved in following path './nico_out/' as <anndata>.obs['nico_ct'] slot" )
     adata=inputdict.ad_sp_ori
     adata.obs['nico_ct']=inputdict.nico_cluster
-    adata.write_h5ad(  inputdict.output_nico_dir+anndata_object_name)
+    adata.write_h5ad(f'{inputdict.output_nico_dir}{anndata_object_name}')
+    print(f"Nico cell type clusters are saved in {inputdict.output_nico_dir}{anndata_object_name} as <anndata>.obs['nico_ct'] slot")
 
 
 def visualize_umap_and_cell_coordinates_with_selected_celltypes(
@@ -1789,11 +1855,11 @@ cmap=plt.cm.get_cmap('jet'),saveas='pdf',transparent_mode=False,figsize=(8,3.5))
         outputdir=output_nico_dir
 
     if output_annotation_dir==None:
-        fig_save_path_main=outputdir+'annotations/'
+        fig_save_path_main=f'{outputdir}annotations/'
     else:
         fig_save_path_main=output_annotation_dir
 
-    adata=sc.read_h5ad(outputdir+anndata_object_name)
+    adata=sc.read_h5ad(f'{outputdir}{anndata_object_name}')
     temp=adata.obsm[umap_tag]
     cellname=adata.obs_names.to_numpy()#df.index.to_numpy()
     cellname=np.reshape(cellname,(len(cellname),1))
@@ -1834,9 +1900,9 @@ cmap=plt.cm.get_cmap('jet'),saveas='pdf',transparent_mode=False,figsize=(8,3.5))
 
 
     CTname=degbased_ctname[:,1]
-    fig_save_path=fig_save_path_main+'fig_individual_annotation/'
+    fig_save_path=f'{fig_save_path_main}fig_individual_annotation/'
     create_directory(fig_save_path)
-    fig_save_path_leg=fig_save_path_main+'fig_individual_annotation/'+'leg/'
+    fig_save_path_leg=f'{fig_save_path_main}fig_individual_annotation/leg/'
     create_directory(fig_save_path_leg)
 
     for fi in range(len(mycluster_interest_all)):
@@ -1900,9 +1966,9 @@ cmap=plt.cm.get_cmap('jet'),saveas='pdf',transparent_mode=False,figsize=(8,3.5))
         #plt.gca().axes.get_yaxis().set_visible(False)
         ax[1].set_axis_off()
         fig.tight_layout()
-        filename=fig_save_path+remove_extra_character_from_name(mycluster_interest[0])+str(fi)
-        print("The figures are saved: ", filename+'.'+saveas)
-        fig.savefig(filename+'.'+saveas,bbox_inches='tight',transparent=transparent_mode,dpi=300)
+        filename=f'{fig_save_path}{remove_extra_character_from_name(mycluster_interest[0])}{fi}'
+        print(f"The figures are saved: {filename}.{saveas}")
+        fig.savefig(f'{filename}.{saveas}',bbox_inches='tight',transparent=transparent_mode,dpi=300)
         if showit:
             pass
         else:
@@ -1911,8 +1977,8 @@ cmap=plt.cm.get_cmap('jet'),saveas='pdf',transparent_mode=False,figsize=(8,3.5))
         fig  = leg1.figure
         fig.canvas.draw()
         bbox  = leg1.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
-        filename=fig_save_path_leg+remove_extra_character_from_name(mycluster_interest[0])+str(fi)
-        fig.savefig(filename+'_leg'+'.'+saveas, bbox_inches=bbox,transparent=transparent_mode,dpi=300)
+        filename=f'{fig_save_path_leg}{remove_extra_character_from_name(mycluster_interest[0])}{fi}'
+        fig.savefig(f'{filename}_leg.{saveas}', bbox_inches=bbox,transparent=transparent_mode,dpi=300)
         if showit:
             pass
         else:
@@ -2004,7 +2070,7 @@ def plot_all_ct(CTname,PP,cellsinCT,ax,flag,cmap):
 
     for i in range(len(CTname)):
         index=cellsinCT[i]
-        labelname=str(i)+'-'+CTname[i]+'-'+str(len(index))
+        labelname=f'{i}-{CTname[i]}-{len(index)}'
         rgba=cmap(cumsum[i])
         ax.plot(PP[index,0],PP[index,1],'o',label=labelname,color=rgba,markersize=1)
         x=np.mean(PP[index,0])
@@ -2051,7 +2117,7 @@ def plot_specific_ct(CTname,PP,index,ax,cmap,ms,msna):
 
     ax.plot(PP[remaining_index,0],PP[remaining_index,1],'.',color="0.5",label='NA',markersize=msna)
     for j in range(len(index)):
-        labelname=CTname[j]+'-'+str(len(index[j]))  #str(j)+'-'+
+        labelname=f'{CTname[j]}-{len(index[j])}'  #str(j)+'-'+
         #labelname=str(j)+'-'+CTname[j]
         rgba=cmap(cumsum[j])
         ax.plot(PP[index[j],0],PP[index[j],1],'o',label=labelname,color=rgba,markersize=ms)

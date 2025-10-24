@@ -261,7 +261,7 @@ coeff_cutoff_for_rid_reg=0,logistic_coef_cutoff=0):
     sp_genename=sct_ad_sp.var_names.to_numpy()
     sc_genename=sct_ad_sc.var_names.to_numpy()
     index_sp,index_sc=find_index(sp_genename,sc_genename)
-    print('common genes between sc and sp',len(index_sp),len(index_sc))
+    print(f'common genes between sc and sp: {len(index_sp)}, {len(index_sc)}')
     ad_sp_ori=sct_ad_sp[:,index_sp].copy()
     ad_sc_ori=sct_ad_sc[:,index_sc].copy()
 
@@ -428,7 +428,7 @@ def plot_cosine_and_spearman_correlation_to_factors(input,choose_celltypes=[],NO
                   perform.append(fi)
                   found.append(CC_celltype_name)
     if len(choose_celltypes)!=0:
-          print("cell types found ",found)
+          print(f"cell types found: {found}")
 
 
     xlabels=[]
@@ -486,8 +486,8 @@ def plot_cosine_and_spearman_correlation_to_factors(input,choose_celltypes=[],NO
         b.set_yticklabels(b.get_ymajorticklabels(), fontsize = 6)
         b.set_title('log(avg exp)')
         #plt.tight_layout()
-        print("The figures are saved: ", input.nmf_output+remove_extra_character_from_name(CC_celltype_name)+'.'+saveas)
-        fig.savefig(input.nmf_output+remove_extra_character_from_name(CC_celltype_name)+'.'+saveas,bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
+        print(f"The figures are saved: {input.nmf_output}{remove_extra_character_from_name(CC_celltype_name)}.{saveas}")
+        fig.savefig(f'{input.nmf_output}{remove_extra_character_from_name(CC_celltype_name)}.{saveas}',bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
         if showit:
             pass
         else:
@@ -514,8 +514,8 @@ def plot_feature_matrices(input,showit=True,saveas='pdf',transparent_mode=False,
     index=np.argsort(input.annotation_spatial_cluster_id)
     snn.heatmap(np.log10(Feature[index,:]),xticklabels=ylabelname)
     #fig.tight_layout()
-    print("The figures are saved: ", input.covariation_dir+'Feature_matrix_PC'+'.'+saveas)
-    fig.savefig(input.covariation_dir+'Feature_matrix_PC'+'.'+saveas,bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
+    print(f"The figures are saved: {input.covariation_dir}Feature_matrix_PC.{saveas}")
+    fig.savefig(f'{input.covariation_dir}Feature_matrix_PC.{saveas}',bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
     if showit:
         pass
     else:
@@ -587,9 +587,9 @@ transparent_mode=False,showit=True,dpi=300,figsize=(6,1.25)):
                   perform.append(fi)
                   found.append(CC_celltype_name)
     if len(choose_celltypes)!=0:
-          print("cell types found ",found)
+          print(f"cell types found: {found}")
 
-    print("The regression figures as pvalue circle plots are saved in following path ", input.regression_outdir+'pvalue_coeff_circleplot_*')
+    print(f"The regression figures as pvalue circle plots are saved in following path {input.regression_outdir}pvalue_coeff_circleplot_*")
 
 
     for i in perform:
@@ -683,7 +683,7 @@ transparent_mode=False,showit=True,dpi=300,figsize=(6,1.25)):
         savefname=remove_extra_character_from_name(str(input.spatialcell_unique_clusterid[i])+'_'+filename)
         #print('\n\n\n',input.regression_outdir+'pvalue_coeff_circleplot_'+savefname+'.'+saveas)
         #print("The figures are saved: ", input.regression_outdir+'pvalue_significance_coeff_matrix_'+savefname+'.'+saveas)
-        fig.savefig(input.regression_outdir+'pvalue_coeff_circleplot_'+savefname+'.'+saveas,bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
+        fig.savefig(f'{input.regression_outdir}pvalue_coeff_circleplot_{savefname}.{saveas}',bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
         if showit:
             pass
         else:
@@ -747,9 +747,9 @@ def plot_significant_regression_covariations_as_heatmap(input,choose_celltypes=[
                   perform.append(fi)
                   found.append(CC_celltype_name)
     if len(choose_celltypes)!=0:
-          print("cell types found ",found)
+          print(f"cell types found: {found}")
 
-    print("The regression figures as pvalue heatmap plots are saved in following path ", input.regression_outdir+'pvalue_coeff_heatmap_*')
+    print(f"The regression figures as pvalue heatmap plots are saved in following path {input.regression_outdir}pvalue_coeff_heatmap_*")
 
 
     for i in perform:
@@ -817,7 +817,7 @@ def plot_significant_regression_covariations_as_heatmap(input,choose_celltypes=[
         #fig.tight_layout()
         savefname=remove_extra_character_from_name(str(input.spatialcell_unique_clusterid[i])+'_'+filename)
         #print("The figures are saved: ", input.regression_outdir+'pvalue_significance_coeff_matrix_'+savefname+'.'+saveas)
-        fig.savefig(input.regression_outdir+'pvalue_coeff_heatmap_'+savefname+'.'+saveas,bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
+        fig.savefig(f'{input.regression_outdir}pvalue_coeff_heatmap_{savefname}.{saveas}',bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
         if showit:
             pass
         else:
@@ -913,8 +913,8 @@ LR_plot_NMF_Fa_thres=0.2, LR_plot_Exp_thres=0.2,number_of_top_genes_to_print=20)
         clname=input.spatialcell_unique_clustername[i]
         d[clname]=clid
 
-    print("The Excel sheet is saved: ",input.covariation_dir+'Lig_and_Rec_enrichment_in_interacting_celltypes.xlsx')
-    print("The text file is saved:",input.covariation_dir+'Regression_summary.txt')
+    print(f"The Excel sheet is saved: {input.covariation_dir}Lig_and_Rec_enrichment_in_interacting_celltypes.xlsx")
+    print(f"The text file is saved: {input.covariation_dir}Regression_summary.txt")
 
     for i in range(n):
         clid=input.spatialcell_unique_clusterid[i]
@@ -1110,9 +1110,9 @@ correlation_with_spearman=True, LR_plot_NMF_Fa_thres=0.2, LR_plot_Exp_thres=0.2,
     saveLRplotsSecond=input.covariation_dir+'Plot_ligand_receptor_in_niche_nc_vs_cc/'
     create_directory(saveLRplotsSecond)
 
-    print("LR figures for both ways are saved in following path ", saveLRplots)
-    print("LR figures for CC to NC are saved in following path ", saveLRplotsFirst)
-    print("LR figures for NC to CC are saved in following path ", saveLRplotsSecond)
+    print(f"LR figures for both ways are saved in following path {saveLRplots}")
+    print(f"LR figures for CC to NC are saved in following path {saveLRplotsFirst}")
+    print(f"LR figures for NC to CC are saved in following path {saveLRplotsSecond}")
 
 
     d={}
@@ -1312,7 +1312,7 @@ def make_excel_sheet_for_gene_correlation(input):
         ax.set_ylabel('PC2')
         ax.set_title(input.spatialcell_unique_clustername[i])
         #fig.tight_layout()
-        fig.savefig(outputFolder+'correlation_'+input.spatialcell_unique_clustername[i]+'.png',bbox_inches='tight',transparent=True,dpi=300)
+        fig.savefig(f'{outputFolder}correlation_{input.spatialcell_unique_clustername[i]}.png',bbox_inches='tight',transparent=True,dpi=300)
         plt.close('all')
         '''
 
@@ -1625,7 +1625,7 @@ def pathway_analysis(input,
     savename=input.covariation_dir+'Pathway_figures/'
     create_directory(savename)
 
-    print("The pathway figures are saved in ", savename)
+    print(f"The pathway figures are saved in {savename}")
 
 
     #coeff_cutoff_for_log_reg=input.logistic_coef_cutoff
@@ -1981,8 +1981,8 @@ correlation_with_spearman=True,positively_correlated=True,saveas='pdf',cmap='RdB
             #create_subtitle(fig, grid[0, ::], CC_celltype_name+' Spearman correlation')
             #create_subtitle(fig, grid[1, ::],  CC_celltype_name+' log(avg expression)')
             fig.tight_layout()
-            print("The figures are saved: ", savefigdir+'Factors_'+remove_extra_character_from_name(CC_celltype_name)+'.'+saveas)
-            plt.savefig(savefigdir+'Factors_'+remove_extra_character_from_name(CC_celltype_name)+'.'+saveas,bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
+            print(f"The figures are saved: {savefigdir}Factors_{remove_extra_character_from_name(CC_celltype_name)}.{saveas}")
+            plt.savefig(f'{savefigdir}Factors_{remove_extra_character_from_name(CC_celltype_name)}.{saveas}',bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
             if showit:
                 pass
             else:
@@ -2805,9 +2805,9 @@ def compute_PC_space(input,sct_ad_sc_full):
     common=a.intersection(b)
 
 
-    print("\n\n Spatial and scRNA-seq number of clusters, respectively ",len(b),len(a))
-    print('Common cell types between spatial and scRNA-seq data  ',len(common),common)
-    print('\nThe spatial cluster name does not match the scRNA-seq cluster name ', b-common)
+    print(f"\n\n Spatial and scRNA-seq number of clusters, respectively {len(b)}, {len(a)}")
+    print(f'Common cell types between spatial and scRNA-seq data  {len(common)}, {common}')
+    print(f'\nThe spatial cluster name does not match the scRNA-seq cluster name {b-common}')
     print("If the above answer is Null, then everything is okay. However, if any spatial cell type does not exist in the scRNA-seq data, please correct this manually; otherwise, NiCo will not run. ")
     print("\n\n")
 
@@ -3163,14 +3163,14 @@ def run_ridge_regression(input,saveoutname,ylabelname,target,neighborhoodClass,s
                 clust = shap.utils.hclust(x_train, y_train[:,i], linkage="single")
                 shap.plots.bar(shap_values, clustering=clust, clustering_cutoff=shap_cluster_cutoff, show=False)
                 plt.title("True to the model "+saveoutname+'_'+'Fa'+str(i+1)+", EVS = " +'%0.4f'%EVS[i])
-                plt.savefig(dir1+saveoutname+'_Fa'+str(i+1)+'.png',dpi=300, bbox_inches = "tight")
+                plt.savefig(f'{dir1}{saveoutname}_Fa{i+1}.png',dpi=300, bbox_inches = "tight")
                 plt.close('all')
 
                 explainer = shap.explainers.Linear(LR, x_train,feature_names=ylabelname,feature_perturbation="correlation_dependent")
                 shap_values = explainer(x_train)
                 shap.plots.bar(shap_values, clustering=clust, clustering_cutoff=shap_cluster_cutoff, show=False)
                 plt.title("True to the data "+saveoutname+'_'+'Fa'+str(i+1)+", EVS = " +'%0.4f'%EVS[i])
-                plt.savefig(dir2+saveoutname+'_Fa'+str(i+1)+'.png',dpi=300, bbox_inches = "tight")
+                plt.savefig(f'{dir2}{saveoutname}_Fa{i+1}.png',dpi=300, bbox_inches = "tight")
                 plt.close('all')
 
     coef=LRC
@@ -3853,8 +3853,8 @@ saveas='pdf',transparent_mode=False,showit=True,figsize=(8,3.5)):
         ax[1].set_title(choose_interacting_celltype_pair[1]+':Fa'+str(visualize_factors_id[1]))
 
     fig.tight_layout()
-    print("The figures are saved: ", input.covariation_dir+'scRNAseq_factors_in_umap.'+saveas)
-    fig.savefig(input.covariation_dir+'scRNAseq_factors_in_umap.'+saveas,bbox_inches='tight',transparent=False,dpi=dpi)
+    print(f"The figures are saved: {input.covariation_dir}scRNAseq_factors_in_umap.{saveas}")
+    fig.savefig(f'{input.covariation_dir}scRNAseq_factors_in_umap.{saveas}',bbox_inches='tight',transparent=False,dpi=dpi)
     if showit:
         pass
     else:
@@ -4045,8 +4045,8 @@ saveas='pdf',transparent_mode=False,showit=True,figsize=(8,3.5)):
         ax[1].set_title(choose_interacting_celltype_pair[1]+':Fa'+str(visualize_factors_id[1]))
 
     fig.tight_layout()
-    print("The figures are saved: ", input.covariation_dir+'spatial_factors_in_umap.'+saveas)
-    fig.savefig(input.covariation_dir+'spatial_factors_in_umap.'+saveas,bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
+    print(f"The figures are saved: {input.covariation_dir}spatial_factors_in_umap.{saveas}")
+    fig.savefig(f'{input.covariation_dir}spatial_factors_in_umap.{saveas}',bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
     if showit:
         pass
     else:
@@ -4307,8 +4307,8 @@ def plot_top_genes_for_a_given_celltype_from_all_factors(input,choose_celltypes=
         create_subtitle(fig, grid[1, ::],  CC_celltype_name+' log(avg expression)')
 
         fig.tight_layout()
-        print("The figures are saved: ", savefigdir+remove_extra_character_from_name(CC_celltype_name)+'.'+saveas)
-        plt.savefig(savefigdir+remove_extra_character_from_name(CC_celltype_name)+'.'+saveas,bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
+        print(f"The figures are saved: {savefigdir}{remove_extra_character_from_name(CC_celltype_name)}.{saveas}")
+        plt.savefig(f'{savefigdir}{remove_extra_character_from_name(CC_celltype_name)}.{saveas}',bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
         if showit:
             pass
         else:
@@ -4481,9 +4481,9 @@ saveas='pdf',transparent_mode=False,showit=True,figsize=(5, 8)):
 
     fig.tight_layout()
 
-    savename = remove_extra_character_from_name(choose_interacting_celltype_pair[0])+'_'+remove_extra_character_from_name(choose_interacting_celltype_pair[1])
-    print("The figures are saved: ", savefigdir+'combined_'+savename+'.'+saveas)
-    plt.savefig(savefigdir+'combined_'+savename+'.'+saveas,bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
+    savename = f'{remove_extra_character_from_name(choose_interacting_celltype_pair[0])}_{remove_extra_character_from_name(choose_interacting_celltype_pair[1])}'
+    print(f"The figures are saved: {savefigdir}combined_{savename}.{saveas}")
+    plt.savefig(f'{savefigdir}combined_{savename}.{saveas}',bbox_inches='tight',transparent=transparent_mode,dpi=dpi)
     if showit:
         pass
     else:

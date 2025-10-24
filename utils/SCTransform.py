@@ -237,13 +237,13 @@ def SCTransform(adata,min_cells=5,gmean_eps=1,n_genes=2000,n_cells=None,bin_size
         adata.X = Xnew # TODO: add log1p of corrected umi counts to layers
 
         for c in full_model_pars.columns:
-            adata.var[c+'_sct'] = full_model_pars[c]
+            adata.var[f'{c}_sct'] = full_model_pars[c]
 
         for c in cell_attrs.columns:
-            adata.obs[c+'_sct'] = cell_attrs[c]
+            adata.obs[f'{c}_sct'] = cell_attrs[c]
 
         for c in model_pars.columns:
-            adata.var[c+'_step1_sct'] = model_pars[c]
+            adata.var[f'{c}_step1_sct'] = model_pars[c]
 
         z = pd.Series(index=gn,data=np.zeros(gn.size,dtype='int'))
         z[gn[genes_step1]]=1
@@ -260,13 +260,13 @@ def SCTransform(adata,min_cells=5,gmean_eps=1,n_genes=2000,n_cells=None,bin_size
         adata_new.raw = adata.copy()
 
         for c in full_model_pars.columns:
-            adata_new.var[c+'_sct'] = full_model_pars[c]
+            adata_new.var[f'{c}_sct'] = full_model_pars[c]
 
         for c in cell_attrs.columns:
-            adata_new.obs[c+'_sct'] = cell_attrs[c]
+            adata_new.obs[f'{c}_sct'] = cell_attrs[c]
 
         for c in model_pars.columns:
-            adata_new.var[c+'_step1_sct'] = model_pars[c]
+            adata_new.var[f'{c}_step1_sct'] = model_pars[c]
 
         z = pd.Series(index=gn,data=np.zeros(gn.size,dtype='int'))
         z[gn[genes_step1]]=1
