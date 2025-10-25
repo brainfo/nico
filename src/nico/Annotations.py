@@ -21,9 +21,7 @@ import seaborn as snn
 from collections import Counter
 
 
-fpath=os.path.join(os.path.dirname(__file__),'utils')
-sys.path.append(fpath)
-from SCTransform import SCTransform
+from nico.utils.SCTransform import SCTransform
 
 #warnings.filterwarnings('ignore')
 #export PYTHONWARNINGS='ignore:Multiprocessing-backed parallel loops:UserWarning'
@@ -1914,8 +1912,9 @@ cmap=plt.cm.get_cmap('jet'),saveas='pdf',transparent_mode=False,figsize=(8,3.5))
             for i in range(len(degbased_ctname)):
                 if degbased_ctname[i][1]==mycluster_interest[j]:
                     myindex=degbased_ctname[i][0]
-            index=np.where(degbased_cluster[:,1]==myindex)
-            barcode.append(degbased_cluster[index[0],0])
+                    index=np.where(degbased_cluster[:,1]==myindex)
+                    barcode.append(degbased_cluster[index[0],0])
+                    break
 
 
         points=np.zeros((len(posdata),2),dtype=float)
