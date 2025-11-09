@@ -249,11 +249,12 @@ def sct_return_sc_sp_in_shared_common_PC_space(ad_sp1,ad_sc1,no_of_pc,method):
     sct_ad_sc=ad_sc1.copy()
     sct_ad_sp=ad_sp1.copy()
 
-    sc.pp.scale(sct_ad_sp, zero_center=True)
+    sc.pp.scale(sct_ad_sp, zero_center=True) ## why scale on sctransform data?
     sc.pp.scale(sct_ad_sc, zero_center=True)
-
-    sc.pp.pca(sct_ad_sc,zero_center=None,n_comps=no_of_pc)
-    sc_com_pc=sct_ad_sc.varm['PCs']
+    if 'PCs' in sct_ad_sc.varm:
+        sc_com_pc=sct_ad_sc.varm['PCs']
+    else:
+        sc.pp.pca(sct_ad_sc,zero_center=None,n_comps=no_of_pc)
 
     if scipy_sparse.issparse(sct_ad_sc.X):
        msc=sct_ad_sc.X.toarray()
@@ -1745,7 +1746,7 @@ number_of_iteration_to_perform_celltype_annotations=3,cmap=plt.cm.get_cmap('jet'
         plt.close('all')
 
 
-def save_annotations_in_spatial_object(inputdict,anndata_object_name='nico_celltype_annotation.h5ad'):
+def save_annotations_in_spatial_object(inputdict=None, spatial_object=None, saveh5ad=None):
     """
     Save NiCo cell type cluster annotations in the AnnData object.
 
@@ -1757,19 +1758,28 @@ def save_annotations_in_spatial_object(inputdict,anndata_object_name='nico_cellt
     inputdict : dict
         A dictionary containing the cell type annotations related objects.
 
-    anndata_object_name : str, optional
+    spatial_object : AnnData, optional
+        An AnnData object containing the spatial data.
+        Default is None.
+
+    saveh5ad : str, optional
         Name of the AnnData file to save the annotated data.
-        Default is 'nico_celltype_annotation.h5ad'.
+        Default is None.
 
     Outputs:
 
-    The function saves the annotated AnnData object in the specified directory ('./nico_out/') with the given file name.
+    if given saveh5ad, the function saves the annotated AnnData object in the specified path. 
+    Otherwise, the function returns the annotated AnnData object.
 
     """
-    adata=inputdict.ad_sp_ori
-    adata.obs['nico_ct']=inputdict.nico_cluster
-    adata.write_h5ad(f'{inputdict.output_nico_dir}{anndata_object_name}')
-    print(f"Nico cell type clusters are saved in {inputdict.output_nico_dir}{anndata_object_name} as <anndata>.obs['nico_ct'] slot")
+    if inputdict is not None:
+        spatial_object=inputdict.ad_sp_ori
+    spatial_object.obs['nico_ct']=inputdict.nico_cluster
+    print(f"Nico cell type clusters are saved in <anndata>.obs['nico_ct'] slot")
+    if saveh5ad is not None:
+        spatial_object.write_h5ad(saveh5ad)
+    return spatial_object
+
 
 
 def visualize_umap_and_cell_coordinates_with_selected_celltypes(
